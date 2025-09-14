@@ -1,13 +1,9 @@
-import express from 'express';
-import { config } from 'dotenv';
-
-// Load environment variables from .env file
-config();
-
-const app = express();
-
-// Middleware
-app.use(express.json());
+import app from './app.js';
+import connectToDatabase from './db/connection.js';
 
 // connections and listeners
-app.listen(5000, () => console.log('Server Open'));
+connectToDatabase()
+.then(() => {
+    app.listen(5000, () => console.log('Server Open & Connected to Database'));
+})
+.catch((err) => console.log(err));
