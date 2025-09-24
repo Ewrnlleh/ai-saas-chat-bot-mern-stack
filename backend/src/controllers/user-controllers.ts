@@ -39,8 +39,11 @@ export const userLogin = async (req: Request, res: Response, next: NextFunction)
         if (!users) {
             return res.status(401).send({ message: "User not found" });
         }
-
-       // return res.status(201).json({ message: "OK", id: users._id.toString() });
+        const isPasswordCorrect = await compare(password, users.password);
+        if (!isPasswordCorrect) {
+            return res.status(403).send("Incorrect password");
+        }
+        return res.status(200).json({ message: "OK", id: users._id.toString() });
     } catch (error) {
         console.log(error);
         return res.status(200).json({ message: "ERROR", cause: error.message });
