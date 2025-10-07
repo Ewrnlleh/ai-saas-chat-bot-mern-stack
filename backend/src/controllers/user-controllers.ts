@@ -45,7 +45,13 @@ export const userLogin = async (req: Request, res: Response, next: NextFunction)
             return res.status(403).send("Incorrect password");
         }
 
+        res.clearCookie("auth_token");
+
+        // Create and set token in cookie
         const token = createToken(users._id.toString(), users.email, "7d");
+        const expires =  new Date();
+        expires.setDate(expires.getDate() + 7);
+        res.cookie("auth_token", token, { path: "/", domain: "localhost", expires, httpOnly: true, signed: true });
 
         return res.status(200).json({ message: "OK", id: users._id.toString() });
     } catch (error) {
