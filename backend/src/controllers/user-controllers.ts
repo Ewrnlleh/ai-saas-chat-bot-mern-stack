@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import User from "../models/User.js";
 import { hash, compare } from "bcrypt";
 import { createToken } from "../utils/token-managers.js";
+import { COOKIE_NAME } from "../utils/constants.js";
 
 export const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -25,6 +26,16 @@ export const userSignup = async (req: Request, res: Response, next: NextFunction
         const hashedPassword = await hash(password, 10); 
         const users = new User({ name, email, password: hashedPassword });
         await users.save();
+
+        // create token and store cookie
+        res.clearCookie(COOKIE_NAME, { httpOnly: true, domain:"localhost", signed: true, path: "/" });
+
+        // Create and set token in cookie
+        const token = createToken(users._id.toString(), users.email, "7d");
+        const expires =  new Date();
+        expires.setDate(expires.getDate() + 7);
+        res.cookie(COOKIE_NAME, token, { path: "/", domain: "localhost", expires, httpOnly: true, signed: true });
+
         return res.status(201).json({ message: "OK", id: users._id.toString() });
     } catch (error) {
         console.log(error);
@@ -45,13 +56,13 @@ export const userLogin = async (req: Request, res: Response, next: NextFunction)
             return res.status(403).send("Incorrect password");
         }
 
-        res.clearCookie("auth_token");
+        res.clearCookie(COOKIE_NAME, { httpOnly: true, domain:"localhost", signed: true, path: "/" });
 
         // Create and set token in cookie
         const token = createToken(users._id.toString(), users.email, "7d");
         const expires =  new Date();
         expires.setDate(expires.getDate() + 7);
-        res.cookie("auth_token", token, { path: "/", domain: "localhost", expires, httpOnly: true, signed: true });
+        res.cookie(COOKIE_NAME, token, { path: "/", domain: "localhost", expires, httpOnly: true, signed: true });
 
         return res.status(200).json({ message: "OK", id: users._id.toString() });
     } catch (error) {
